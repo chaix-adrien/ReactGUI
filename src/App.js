@@ -2,7 +2,8 @@ import React from "react"
 import "./App.css"
 import ComponentsList from "./ComponentsList"
 import GeneratedView from "./GeneratedView"
-import { DragDropContext, Droppable } from "react-beautiful-dnd"
+import { DndProvider } from "react-dnd"
+import HTML5Backend from "react-dnd-html5-backend"
 
 class App extends React.Component {
 	constructor(props) {
@@ -12,14 +13,14 @@ class App extends React.Component {
 
 	render() {
 		return (
-			<DragDropContext onDragEnd={e => this.onDragEnd(e)}>
+			<DndProvider backend={HTML5Backend}>
 				<div className="App">
 					<div className="App-body">
 						<GeneratedView onDragEndBind={cb => (this.onDragEnd = cb)} />
 						<ComponentsList />
 					</div>
 				</div>
-			</DragDropContext>
+			</DndProvider>
 		)
 	}
 }

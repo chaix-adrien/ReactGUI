@@ -1,8 +1,39 @@
 import React from "react"
-import { Draggable, Droppable } from "react-beautiful-dnd"
 import StyleEditor from "react-style-editor"
 import Style from "style-it"
 import PubSub from "pubsub-js"
+import { DropTarget } from "react-dnd"
+import { DragSource } from "react-dnd"
+
+function collectDrop(connect, monitor) {
+	return {
+		connectDropTarget: connect.dropTarget(),
+	}
+}
+
+function collectDrag(connect, monitor) {
+	return {
+		connectDragSource: connect.dragSource(),
+		isDragging: monitor.isDragging(),
+	}
+}
+
+const itemSourceDrop = {
+	drop(props, m, object) {
+		console.log("LEFT ON SUB")
+		//	return { addChild: object.addChild }
+	},
+}
+
+const itemSourceDrag = {
+	beginDrag(props) {
+		console.log("begin")
+		return { id: 1 }
+	},
+	endDrag(props, monitor) {
+		//monitor.getDropResult().addChild(props.compo)
+	},
+}
 
 function getRandomColor() {
 	var letters = "0123456789ABCDEF"
@@ -21,6 +52,7 @@ class CompoUsed extends React.Component {
 			edit: false,
 		}
 		this.id = this.props.id
+		console.log(props.type)
 		this.node = React.createElement(props.type, { className: "div" + this.id })
 		this.type = this.props.type
 		var token = PubSub.subscribe("EDIT", (msg, id) => {
@@ -34,27 +66,25 @@ class CompoUsed extends React.Component {
 
 	render() {
 		const { edit, style } = this.state
-		return (
-			<Draggable index={this.id} draggableId={this.type + " used " + this.id}>
-				{(provided, snapshot) => {
-					console.log(provided)
-					return (
-						<div onClick={_ => PubSub.publish("EDIT", this.id)} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-							{Style.it(style + (edit ? `.${this.type}${this.id} {background-color: yellow}` : ""), this.node)}
-							<div style={{ display: edit ? "unset" : "none", position: "absolute", right: 0, bottom: 0, width: "20%" }}>
-								<StyleEditor
-									onChange={value => {
-										this.setState({ style: value })
-									}}
-									defaultValue={`.${this.type}${this.id} {border-style: dashed;width: 100px;height: 100px;border-color: ${getRandomColor()};}`}
-								/>
-							</div>
-						</div>
-					)
-				}}
-			</Draggable>
+		const { connectDropTarget } = this.props
+		const { isDragging, connectDragSource, src } = this.props
+
+		return connectDragSource(
+			connectDropTarget(
+				<div>
+					{Style.it(style + (edit ? `.${this.type}${this.id} {background-color: yellow}` : ""), this.node)}
+					<div style={{ display: edit ? "unset" : "none", position: "absolute", right: 0, bottom: 0, width: "20%" }}>
+						<StyleEditor
+							onChange={value => {
+								this.setState({ style: value })
+							}}
+							defaultValue={`.${this.type}${this.id} {border-style: dashed;width: 100px;height: 100px;border-color: ${getRandomColor()};}`}
+						/>
+					</div>
+				</div>
+			)
 		)
 	}
 }
 
-export default CompoUsed
+export default DragSource("div", itemSourceDrag, collectDrag)(DropTarget("div", itemSourceDrop, collectDrop)(CompoUsed))

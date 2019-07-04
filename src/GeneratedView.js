@@ -1,6 +1,19 @@
 import React from "react"
-import { Draggable, Droppable } from "react-beautiful-dnd"
 import CompoUsed from "./CompoUsed"
+import { DropTarget } from "react-dnd"
+
+function collect(connect, monitor) {
+	return {
+		connectDropTarget: connect.dropTarget(),
+	}
+}
+
+const itemSource = {
+	drop(props, m, object) {
+		console.log("LEFT ON MAIN")
+		return { addChild: object.addChild }
+	},
+}
 
 class GeneratedView extends React.Component {
 	constructor(props) {
@@ -10,17 +23,11 @@ class GeneratedView extends React.Component {
 		}
 	}
 
-	onDragEnd = event => {
-		console.log(event)
-		if (event.destination && event.destination.droppableId.includes("GeneratedView")) {
-			if (event.draggableId.includes("used")) {
-			} else {
-				this.setState(state => {
-					const content = state.content.concat(<CompoUsed key={state.content.length} id={state.content.length} type={event.draggableId} />)
-					return { content }
-				})
-			}
-		}
+	addChild = type => {
+		this.setState(state => {
+			const content = state.content.concat(<CompoUsed key={state.content.length} id={state.content.length} type={type} />)
+			return { content }
+		})
 	}
 
 	componentWillMount() {
@@ -28,17 +35,9 @@ class GeneratedView extends React.Component {
 	}
 
 	render() {
-		return (
-			<Droppable droppableId="GeneratedView">
-				{(provided, snapshot) => (
-					<div {...provided.droppableProps} ref={provided.innerRef} style={{ backgroundColor: "white", flex: 8 }}>
-						{this.state.content}
-						{provided.placeholder}
-					</div>
-				)}
-			</Droppable>
-		)
+		const { connectDropTarget } = this.props
+		return connectDropTarget(<div style={{ backgroundColor: "white", flex: 8 }}>{this.state.content}</div>)
 	}
 }
 
-export default GeneratedView
+export default DropTarget("div", itemSource, collect)(GeneratedView)
